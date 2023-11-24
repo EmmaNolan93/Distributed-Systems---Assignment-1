@@ -84,7 +84,31 @@
                 "userId"
             ],
             "type": "object"
-        }
+        },
+        "MovieCast": {
+            "additionalProperties": false,
+            "properties": {
+              "movieId": {
+                "type": "number"
+              },
+              "actorName": {
+                "type": "string"
+              },
+              "roleName": {
+                "type": "string"
+              },
+              "roleDescription": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "movieId",
+              "actorName",
+              "roleName",
+              "roleDescription"
+            ],
+            "type": "object"
+          }
     }
 }
 
