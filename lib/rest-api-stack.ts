@@ -131,7 +131,7 @@ export class RestAPIStack extends cdk.Stack {
             memorySize: 128,
             environment: {
               TABLE_NAME: movieCastsTable.tableName,
-              REGION: "eu-west-1",
+              REGION: "eu-north-1",
             },
           }
         );

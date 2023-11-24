@@ -8,16 +8,16 @@ import {
 } from "@aws-sdk/lib-dynamodb";
 import Ajv from "ajv";
 import * as schema from '../shared/types.schema.json';
+
 const ajv = new Ajv();
-const isValidQueryParams = ajv.compile(
-  schema.definitions["MovieCast"] || {}
-);
- 
+
+
 const ddbDocClient = createDocumentClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", event);
+    const parameters  = event?.pathParameters;
     const queryParams = event.queryStringParameters;
     if (!queryParams) {
       return {
@@ -28,21 +28,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ message: "Missing query parameters" }),
       };
     }
-    if (!isValidQueryParams(queryParams)) {
-      return {
-        statusCode: 500,
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          message: `Incorrect type. Must match Query parameters schema`,
-          schema: schema.definitions["MovieCast"],
-        }),
-      };
-    }
+   
     
     // const parameters = event.queryStringParameters;
-    const movieId = parseInt(queryParams.movieId);
+    const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
     let commandInput: QueryCommandInput = {
       TableName: process.env.TABLE_NAME,
     };
