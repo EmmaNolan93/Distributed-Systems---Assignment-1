@@ -150,39 +150,42 @@ export class RestAPIStack extends cdk.Stack {
         moviesTable.grantReadWriteData(newMovieFn)
 
          // REST API 
-    const api = new apig.RestApi(this, "RestAPI", {
-      description: "demo api",
-      deployOptions: {
-        stageName: "dev",
-      },
-      // 👇 enable CORS
-      defaultCorsPreflightOptions: {
-        allowHeaders: ["Content-Type", "X-Amz-Date"],
-        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
-        allowCredentials: true,
-        allowOrigins: ["*"],
-      },
-    });
+// REST API 
+const api = new apig.RestApi(this, "RestAPI", {
+  description: "demo api",
+  deployOptions: {
+    stageName: "dev",
+  },
+  // 👇 enable CORS
+  defaultCorsPreflightOptions: {
+    allowHeaders: ["Content-Type", "X-Amz-Date"],
+    allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowCredentials: true,
+    allowOrigins: ["*"],
+  },
+});
 
-    const moviesEndpoint = api.root.addResource("movies");
-    moviesEndpoint.addMethod(
-      "GET",
-      new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
-    );
-    moviesEndpoint.addMethod(
-      "POST",
-      new apig.LambdaIntegration(newMovieFn, { proxy: true })
-    );
+const moviesEndpoint = api.root.addResource("movies");
+moviesEndpoint.addMethod(
+  "GET",
+  new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
+);
+moviesEndpoint.addMethod(
+  "POST",
+  new apig.LambdaIntegration(newMovieFn, { proxy: true })
+);
 
-    const movieEndpoint = moviesEndpoint.addResource("{movieId}");
-    movieEndpoint.addMethod(
-      "GET",
-      new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
-    );
+const movieEndpoint = moviesEndpoint.addResource("{movieId}");
+movieEndpoint.addMethod(
+  "GET",
+  new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
+);
 
-    const movieReviewsEndpoint = api.root.addResource("MovieReviewsTable");
+const movieReviewsEndpoint = api.root.addResource("MovieReviewsTable");
 const specificMovieReviewsEndpoint = movieReviewsEndpoint.addResource("{reviewId}");
-specificMovieReviewsEndpoint.addMethod(
+const specificMovieEndpoint = specificMovieReviewsEndpoint.addResource("{movieId}");
+
+specificMovieEndpoint.addMethod(
   "GET",
   new apig.LambdaIntegration(getAllMovieReviewsFn, { proxy: true })
 );

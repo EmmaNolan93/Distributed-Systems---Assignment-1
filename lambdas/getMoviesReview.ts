@@ -8,23 +8,24 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", event);
 
-    const parameters = event?.pathParameters;
-    const reviewId = parameters?.reviewId ? parseInt(parameters.reviewId) : undefined;
+    // Correctly extract path parameters from event
+    const reviewId = event.pathParameters?.reviewId ? parseInt(event.pathParameters.reviewId) : undefined;
+    const movieId = event.pathParameters?.movieId ? parseInt(event.pathParameters.movieId) : undefined;
 
-    if (!reviewId) {
+    if (!reviewId || !movieId) {
       return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Missing review Id" }),
+        body: JSON.stringify({ Message: "Missing reviewId or movieId" }),
       };
     }
 
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
-        TableName: 'MovieReviews', // Replace with your actual review table name
-        Key: { reviewId: reviewId },
+        TableName: 'MovieReviews',
+        Key: { reviewId: reviewId, movieId: movieId },
       })
     );
 
@@ -36,7 +37,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Invalid review Id" }),
+        body: JSON.stringify({ Message: "Invalid reviewId or movieId" }),
       };
     }
 
