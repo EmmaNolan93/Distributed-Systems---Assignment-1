@@ -15,7 +15,7 @@ export type Movie = {
   export type MovieReview = {
     reviewId: number;
     movieId: number;
-    userId: number;
+    username: string;
     rating: number;
     comment: string;
     timestamp: string; // or use a Date type

@@ -26,8 +26,7 @@ export class RestAPIStack extends cdk.Stack {
     // Movie Reviews Table
     const movieReviewsTable = new dynamodb.Table(this, "MovieReviewsTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      partitionKey: { name: "reviewId", type: dynamodb.AttributeType.NUMBER },
-      sortKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
+      partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "MovieReviews",
     });
@@ -90,15 +89,13 @@ export class RestAPIStack extends cdk.Stack {
           },
         });
 
-
-
-        const getAllMovieReviewsFn = new lambdanode.NodejsFunction(
+        const getAllReviewsForMovieFn = new lambdanode.NodejsFunction(
           this,
-          "GetAllMovieReviewsFn",
+          "GetAllReviewsForMovieFn",
           {
             architecture: lambda.Architecture.ARM_64,
             runtime: lambda.Runtime.NODEJS_16_X,
-            entry: `${__dirname}/../lambdas/getMoviesReview.ts`,
+            entry: `${__dirname}/../lambdas/getAllMoviesReview.ts`, // Create a new Lambda function file for this endpoint
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
             environment: {
@@ -188,7 +185,7 @@ export class RestAPIStack extends cdk.Stack {
         // Permissions 
         moviesTable.grantReadData(getMovieByIdFn)
         moviesTable.grantReadData(getAllMoviesFn)
-        movieReviewsTable.grantReadData(getAllMovieReviewsFn);
+        movieReviewsTable.grantReadData(getAllReviewsForMovieFn);
         moviesTable.grantReadWriteData(newMovieFn)
         moviesTable.grantWriteData(deleteMovieFn);
         movieCastsTable.grantReadData(getMovieCastMembersFn);
@@ -233,15 +230,13 @@ movieCastEndpoint.addMethod(
     "GET",
     new apig.LambdaIntegration(getMovieCastMembersFn, { proxy: true })
 );
-const movieReviewsEndpoint = api.root.addResource("MovieReviewsTable");
-const specificMovieReviewsEndpoint = movieReviewsEndpoint.addResource("{reviewId}");
-const specificMovieEndpoint = specificMovieReviewsEndpoint.addResource("{movieId}");
+//const movieReviewsEndpoint = api.root.addResource("MovieReviewsTable");
 
-specificMovieEndpoint.addMethod(
+const movieReviewsForMovieEndpoint = movieEndpoint.addResource("reviews");
+movieReviewsForMovieEndpoint.addMethod(
   "GET",
-  new apig.LambdaIntegration(getAllMovieReviewsFn, { proxy: true })
+  new apig.LambdaIntegration(getAllReviewsForMovieFn, { proxy: true })
 );
+}
 
 }
-}
-    
