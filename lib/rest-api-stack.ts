@@ -196,10 +196,11 @@ export class RestAPIStack extends cdk.Stack {
         new cdk.CfnOutput(this, "Get Movie Function Url", { value: getMovieByIdURL.url });
         new cdk.CfnOutput(this, "All Movies Function Url", { value: getAllMovieByIdURL.url });
         // Permissions 
-        moviesTable.grantReadData(getMovieByIdFn)
-        moviesTable.grantReadData(getAllMoviesFn)
+        moviesTable.grantReadData(getMovieByIdFn);
+        moviesTable.grantReadData(getAllMoviesFn);
         movieReviewsTable.grantReadData(getAllReviewsForMovieFn);
-        moviesTable.grantReadWriteData(newMovieFn)
+        moviesTable.grantReadWriteData(newMovieFn);
+        moviesTable.grantReadWriteData(newMovieReviewFn);
         movieReviewsTable.grantReadWriteData(newMovieReviewFn);
         moviesTable.grantWriteData(deleteMovieFn);
         movieCastsTable.grantReadData(getMovieCastMembersFn);
@@ -251,7 +252,8 @@ movieReviewsForMovieEndpoint.addMethod(
   "GET",
   new apig.LambdaIntegration(getAllReviewsForMovieFn, { proxy: true })
 );
-movieReviewsForMovieEndpoint.addMethod(
+const postReviewsForMovieEndpoint = moviesEndpoint.addResource("reviews");
+postReviewsForMovieEndpoint.addMethod(
   "POST",
   new apig.LambdaIntegration(newMovieReviewFn, { proxy: true })
 );
