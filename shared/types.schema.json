@@ -97,32 +97,16 @@
         "MovieReview": {
             "additionalProperties": false,
             "properties": {
-                "comment": {
-                    "type": "string"
-                },
-                "movieId": {
-                    "type": "number"
-                },
-                "rating": {
-                    "type": "number"
-                },
-                "reviewId": {
-                    "type": "number"
-                },
-                "username": {
-                    "type": "string"
-                }
+              "comment": { "type": "string" },
+              "movieId": { "type": "number" },
+              "rating": { "type": "number" },
+              "reviewId": { "type": "number" },
+              "username": { "type": "string" },
+              "timestamp": { "type": "string" }
             },
-            "required": [
-                "comment",
-                "movieId",
-                "rating",
-                "reviewId",
-                "timestamp",
-                "username"
-            ],
+            "required": ["comment", "movieId", "rating", "reviewId", "username", "timestamp"],
             "type": "object"
-        }
+          }
     }
 }
 

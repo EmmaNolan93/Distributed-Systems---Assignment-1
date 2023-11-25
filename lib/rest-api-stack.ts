@@ -89,13 +89,26 @@ export class RestAPIStack extends cdk.Stack {
           },
         });
 
+        const newMovieReviewFn = new lambdanode.NodejsFunction(this, "AddMovieReviewFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_16_X,
+          entry: `${__dirname}/../lambdas/addMovieReview.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: movieReviewsTable.tableName,
+            REGION: "eu-north-1",
+          },
+        });
+
+
         const getAllReviewsForMovieFn = new lambdanode.NodejsFunction(
           this,
           "GetAllReviewsForMovieFn",
           {
             architecture: lambda.Architecture.ARM_64,
             runtime: lambda.Runtime.NODEJS_16_X,
-            entry: `${__dirname}/../lambdas/getAllMoviesReview.ts`, // Create a new Lambda function file for this endpoint
+            entry: `${__dirname}/../lambdas/getAllMoviesReview.ts`, 
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
             environment: {
@@ -153,7 +166,7 @@ export class RestAPIStack extends cdk.Stack {
         new custom.AwsCustomResource(this, "movieReviewsDdbInitData", {
           onCreate: {
             service: "DynamoDB",
-            action: "batchWriteItem", // Correct action for batch write
+            action: "batchWriteItem", 
             parameters: {
               RequestItems: {
                 [movieReviewsTable.tableName]: generateReviewBatch(movieReviews),
@@ -187,6 +200,7 @@ export class RestAPIStack extends cdk.Stack {
         moviesTable.grantReadData(getAllMoviesFn)
         movieReviewsTable.grantReadData(getAllReviewsForMovieFn);
         moviesTable.grantReadWriteData(newMovieFn)
+        movieReviewsTable.grantReadWriteData(newMovieReviewFn);
         moviesTable.grantWriteData(deleteMovieFn);
         movieCastsTable.grantReadData(getMovieCastMembersFn);
 
@@ -236,6 +250,10 @@ const movieReviewsForMovieEndpoint = movieEndpoint.addResource("reviews");
 movieReviewsForMovieEndpoint.addMethod(
   "GET",
   new apig.LambdaIntegration(getAllReviewsForMovieFn, { proxy: true })
+);
+movieReviewsForMovieEndpoint.addMethod(
+  "POST",
+  new apig.LambdaIntegration(newMovieReviewFn, { proxy: true })
 );
 }
 
