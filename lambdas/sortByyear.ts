@@ -8,9 +8,9 @@ const ddbDocClient = createDynamoDBDocClient();
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     try {
         const movieId = event.pathParameters?.movieId;
-        const reviewerName = event.pathParameters?.reviewerName;
+        const year = event.pathParameters?.year;
         console.log('Received event:', JSON.stringify(event));
-        console.log('Extracted parameters - movieId:', movieId, 'reviewerName:', reviewerName);
+        console.log('Extracted parameters - movieId:', movieId, 'year:', year);
 
         if (!movieId) {
             return {
@@ -22,18 +22,20 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             };
         }
 
-        if (!reviewerName) {
+        if (!year) {
             return {
                 statusCode: 400,
                 headers: {
                     "content-type": "application/json",
                 },
-                body: JSON.stringify({ error: "Missing reviewer name in the request path" }),
+                body: JSON.stringify({ error: "Missing year in the request path" }),
             };
         }
 
-        // Query reviews for the specified movie with the given reviewer name
-        const reviews = await getMovieReviewsByReviewer(movieId, reviewerName);
+        // Validate year format as needed
+
+        // Query reviews for the specified movie in the given year
+        const reviews = await getMovieReviewsByYear(movieId, year);
         console.log(reviews);
 
         return {
@@ -55,7 +57,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
 };
 
-async function getMovieReviewsByReviewer(movieId: string, reviewerName: string): Promise<any[] | { statusCode: number; headers: { "content-type": string }; body: string }> {
+async function getMovieReviewsByYear(movieId: string, year: string): Promise<any[] | { statusCode: number; headers: { "content-type": string }; body: string }> {
     try {
         const movieIdAsNumber = parseInt(movieId, 10);
 
@@ -72,13 +74,17 @@ async function getMovieReviewsByReviewer(movieId: string, reviewerName: string):
         const params: any = {
             TableName: 'MovieReviews',
             KeyConditionExpression: 'movieId = :movieId',
-            FilterExpression: 'username = :reviewerName',
+            FilterExpression: 'begins_with(#timestamp, :year)',
+            ExpressionAttributeNames: {
+                '#timestamp': 'timestamp',
+            },
             ExpressionAttributeValues: {
                 ':movieId': movieIdAsNumber,
-                ':reviewerName': reviewerName,
+                ':year': year,
             },
         };
 
+        console.log("DynamoDB query parameters:", params);
         const response = await ddbDocClient.send(new QueryCommand(params));
 
         console.log("DynamoDB response:", response);

@@ -146,6 +146,22 @@ export class RestAPIStack extends cdk.Stack {
           }
         );
 
+        const getAllReviewsForMovieYearFn = new lambdanode.NodejsFunction(
+          this,
+          "getAllReviewsForMovieYearFn",
+          {
+            architecture: lambda.Architecture.ARM_64,
+            runtime: lambda.Runtime.NODEJS_16_X,
+            entry: `${__dirname}/../lambdas/sortByyear.ts`, 
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            environment: {
+              TABLE_NAME: movieReviewsTable.tableName,
+              REGION: 'eu-north-1',
+            },
+          }
+        );
+
         const deleteMovieFn = new lambdanode.NodejsFunction(this, 'DeleteMovieFn', {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
@@ -206,23 +222,6 @@ export class RestAPIStack extends cdk.Stack {
             resources: [movieReviewsTable.tableArn],
           }),
         });
-
-        const getMovieByIdURL = getMovieByIdFn.addFunctionUrl({
-          authType: lambda.FunctionUrlAuthType.NONE,
-          cors: {
-            allowedOrigins: ["*"],
-          },
-        });
-    
-        const getAllMovieByIdURL = getAllMoviesFn.addFunctionUrl({
-          authType: lambda.FunctionUrlAuthType.AWS_IAM,  
-          cors: {
-            allowedOrigins: ["*"],
-          },
-        });
-
-        new cdk.CfnOutput(this, "Get Movie Function Url", { value: getMovieByIdURL.url });
-        new cdk.CfnOutput(this, "All Movies Function Url", { value: getAllMovieByIdURL.url });
         // Permissions 
         moviesTable.grantReadData(getMovieByIdFn);
         moviesTable.grantReadData(getAllMoviesFn);
@@ -236,6 +235,8 @@ export class RestAPIStack extends cdk.Stack {
         movieCastsTable.grantReadData(getMovieCastMembersFn);
         movieReviewsTable.grantReadWriteData(updateReviewFn);
         moviesTable.grantReadData(updateReviewFn);
+        movieReviewsTable.grantReadWriteData(getAllReviewsForMovieYearFn);
+        moviesTable.grantReadWriteData(getAllReviewsForMovieYearFn);
 // REST API 
 const api = new apig.RestApi(this, "RestAPI", {
   description: "demo api",
@@ -287,7 +288,13 @@ postReviewsForMovieEndpoint.addMethod(
   "POST",
   new apig.LambdaIntegration(newMovieReviewFn, { proxy: true })
 );
-const movieReviewByReviewerEndpoint = movieReviewsForMovieEndpoint.addResource("{reviewerName}");
+
+const movieReviewYearEndpoint = movieReviewsForMovieEndpoint.addResource("{year}");
+movieReviewYearEndpoint.addMethod(
+  "GET",
+  new apig.LambdaIntegration(getAllReviewsForMovieYearFn, { proxy: true })
+);
+const movieReviewByReviewerEndpoint = movieReviewsForMovieEndpoint.addResource("reviewer");
 movieReviewByReviewerEndpoint.addMethod(
   "GET",
   new apig.LambdaIntegration(getAllReviewsForMovieNameFn, { proxy: true })
