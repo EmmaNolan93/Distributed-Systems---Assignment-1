@@ -24,12 +24,19 @@ export class RestAPIStack extends cdk.Stack {
     });
 
     // Movie Reviews Table
-    const movieReviewsTable = new dynamodb.Table(this, "MovieReviewsTable", {
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      tableName: "MovieReviews",
-    });
+const movieReviewsTable = new dynamodb.Table(this, "MovieReviewsTable", {
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+  partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
+  removalPolicy: cdk.RemovalPolicy.DESTROY,
+  tableName: "MovieReviews",
+});
+
+// Add a Global Secondary Index for reviewerName
+movieReviewsTable.addGlobalSecondaryIndex({
+  indexName: 'ReviewerIndex',
+  partitionKey: { name: 'reviewerName', type: dynamodb.AttributeType.STRING },
+});
+
 
     const movieCastsTable = new dynamodb.Table(this, "MovieCastTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -146,6 +153,22 @@ export class RestAPIStack extends cdk.Stack {
           }
         );
 
+        const getAllReviewsByReviewersFn = new lambdanode.NodejsFunction(
+          this,
+          "getAllReviewsByReviewersFn",
+          {
+            architecture: lambda.Architecture.ARM_64,
+            runtime: lambda.Runtime.NODEJS_16_X,
+            entry: `${__dirname}/../lambdas/getReviewsByReviewer.ts`, 
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            environment: {
+              TABLE_NAME: movieReviewsTable.tableName,
+              REGION: 'eu-north-1',
+            },
+          }
+        );
+
         const getAllReviewsForMovieYearFn = new lambdanode.NodejsFunction(
           this,
           "getAllReviewsForMovieYearFn",
@@ -237,6 +260,8 @@ export class RestAPIStack extends cdk.Stack {
         moviesTable.grantReadData(updateReviewFn);
         movieReviewsTable.grantReadWriteData(getAllReviewsForMovieYearFn);
         moviesTable.grantReadWriteData(getAllReviewsForMovieYearFn);
+        movieReviewsTable.grantReadWriteData(getAllReviewsByReviewersFn);
+        movieReviewsTable.grantReadData(getAllReviewsByReviewersFn);
 // REST API 
 const api = new apig.RestApi(this, "RestAPI", {
   description: "demo api",
@@ -302,6 +327,14 @@ movieReviewByReviewerEndpoint.addMethod(
 movieReviewByReviewerEndpoint.addMethod(
   "PUT",
   new apig.LambdaIntegration(updateReviewFn, { proxy: true })
+);
+// Add a new resource for 'reviews' under 'movies'
+const reviewsResource =  postReviewsForMovieEndpoint.addResource('{reviewername}')
+
+// Add a new method for 'GET' HTTP verb
+reviewsResource.addMethod(
+    "GET",
+    new apig.LambdaIntegration(getAllReviewsByReviewersFn, { proxy: true })
 );
 }
 }
