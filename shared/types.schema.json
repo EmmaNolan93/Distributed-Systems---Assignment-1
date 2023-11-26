@@ -106,6 +106,15 @@
             },
             "required": ["comment", "movieId", "rating", "reviewId", "username", "timestamp"],
             "type": "object"
+          },
+          "UpdateReview": {
+            "additionalProperties": false,
+            "properties": {
+              "comment": { "type": "string" },
+              "rating": { "type": "number" }
+            },
+            "required": ["comment", "rating"],
+            "type": "object"
           }
     }
 }

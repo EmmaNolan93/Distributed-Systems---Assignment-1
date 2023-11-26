@@ -87,15 +87,7 @@ async function getMovieReviewsByReviewer(movieId: string, reviewerName: string):
         console.log(response.Items);
 
         const reviews = response.Items || [];
-        if (reviews.length === 0) {
-            return {
-                statusCode: 404,
-                headers: {
-                    "content-type": "application/json",
-                },
-                body: JSON.stringify({ error: "Username does not match any reviews made on this movie" }),
-            };
-        }
+
         return reviews;
     } catch (error) {
         console.error("Error getting movie reviews:", error);
