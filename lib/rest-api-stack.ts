@@ -60,7 +60,7 @@ export class RestAPIStack extends cdk.Stack {
         },
       }
       );
-      
+
       const getAllMoviesFn = new lambdanode.NodejsFunction(
         this,
         "GetAllMoviesFn",
@@ -204,8 +204,6 @@ export class RestAPIStack extends cdk.Stack {
         movieReviewsTable.grantReadWriteData(newMovieReviewFn);
         moviesTable.grantWriteData(deleteMovieFn);
         movieCastsTable.grantReadData(getMovieCastMembersFn);
-
-         // REST API 
 // REST API 
 const api = new apig.RestApi(this, "RestAPI", {
   description: "demo api",
